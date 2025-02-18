@@ -1,5 +1,6 @@
 from typing import Callable, Coroutine, Type
 
+from asgiref.sync import sync_to_async
 from django.db.models import ManyToOneRel
 from django.db.models import Model as DjangoModel
 from django.db.models.fields.related import RelatedField
@@ -49,7 +50,7 @@ class PKDataLoaderFactory(BaseDjangoModelDataLoaderFactory):
         async def resolver(root: "DjangoModel", info: "Info"):  # beware, first argument needs to be called 'root'
             field_data: "StrawberryDjangoField" = info._field
             relation: "RelatedField" = root._meta.get_field(field_name=field_data.django_name)
-            pk = getattr(root, relation.attname)
+            pk = sync_to_async(getattr)(root, relation.attname)
             return await cls.get_loader_class(field_data.django_model)(context=info.context).load(pk)
 
         return resolver
